@@ -39,6 +39,7 @@ export const App = () => {
 		queryKey: ['filterData']
 	})
 	const { t } = useTranslation()
+	const { isOpen, onOpen, onClose } = useDisclosure()
 
 	const [selectedFilters, setSelectedFilters] = useState<SearchRequestFilter>(
 		[]
@@ -47,8 +48,6 @@ export const App = () => {
 	const [isConfirmOpen, setConfirmOpen] = useState(false)
 
 	const toast = useToast()
-
-	const { isOpen, onOpen, onClose } = useDisclosure()
 
 	useEffect(() => {
 		if (isOpen) {
@@ -146,17 +145,27 @@ export const App = () => {
 						border="1px solid #ddd"
 						borderRadius="md"
 					>
-						{filterData?.length && filterData?.length > 0 ? (
+						{selectedFilters.length > 0 ? (
 							<List
 								spacing={2}
 								mt={2}
 							>
-								{filterData?.map(filter => (
+								{selectedFilters.map(filter => (
 									<ListItem key={filter.id}>
 										<Text textStyle="body-text-2">
 											{filterData?.find(fil => fil.id === filter.id)?.name}:
 										</Text>
-										<Text>{t('filter.options')}</Text>
+										<Text>
+											{filter.optionsIds
+												.map(
+													optionId =>
+														filterData
+															?.find(fil => fil.id === filter.id)
+															?.options.find(option => option.id === optionId)
+															?.name
+												)
+												.join(', ')}
+										</Text>
 									</ListItem>
 								))}
 							</List>
@@ -240,6 +249,9 @@ export const App = () => {
 													textStyle={'body-text-6'}
 													size="md"
 													key={option.id}
+													isChecked={tempFilters
+														.find(filter => filter.id === item.id)
+														?.optionsIds.includes(option.id)}
 													onChange={() =>
 														handleFilterChange(item.id, option.id)
 													}
@@ -267,6 +279,7 @@ export const App = () => {
 									textStyle="button"
 									borderRadius="md"
 									_hover={{ bg: 'brand.300' }}
+									onClick={() => setConfirmOpen(true)}
 								>
 									{t('filter.apply')}
 								</Button>
@@ -291,7 +304,7 @@ export const App = () => {
 
 				<Modal
 					isOpen={isConfirmOpen}
-					onClose={() => console.log('close')}
+					onClose={() => setConfirmOpen(false)}
 				>
 					<ModalOverlay />
 					<ModalContent
@@ -319,6 +332,10 @@ export const App = () => {
 									border="2px solid gray.200"
 									colorScheme="gray"
 									mr={3}
+									onClick={() => {
+										setConfirmOpen(false)
+										onClose()
+									}}
 								>
 									{t('filter.useOldFilter')}
 								</Button>
