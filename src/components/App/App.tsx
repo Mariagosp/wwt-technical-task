@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -18,11 +19,13 @@ import {
 	Spinner,
 	Text,
 	VStack,
-	useDisclosure
+	useDisclosure,
+	useToast
 } from '@chakra-ui/react'
 import { useQuery } from '@tanstack/react-query'
 
-import { FilterChoose } from '@api/types/Filter'
+import { FilterChoose, FilterType } from '@api/types/Filter'
+import { SearchRequestFilter } from '@api/types/SearchRequest/SearchRequestFilter'
 
 import filteredItems from '../../temp/filterData.json'
 
@@ -37,7 +40,63 @@ export const App = () => {
 	})
 	const { t } = useTranslation()
 
+	const [selectedFilters, setSelectedFilters] = useState<SearchRequestFilter>(
+		[]
+	)
+	const [tempFilters, setTempFilters] = useState<SearchRequestFilter>([])
+	const [isConfirmOpen, setConfirmOpen] = useState(false)
+
+	const toast = useToast()
+
 	const { isOpen, onOpen, onClose } = useDisclosure()
+
+	useEffect(() => {
+		if (isOpen) {
+			setTempFilters(selectedFilters)
+		}
+	}, [isOpen, selectedFilters])
+
+	const updateFilter = (
+		filters: SearchRequestFilter,
+		itemId: string,
+		optionId: string
+	): SearchRequestFilter => {
+		const existing = filters.find(filter => filter.id === itemId)
+		if (existing) {
+			const alreadySelected = existing.optionsIds.includes(optionId)
+			return filters.map(filter =>
+				filter.id === itemId
+					? {
+							...filter,
+							optionsIds: alreadySelected
+								? filter.optionsIds.filter(id => id !== optionId)
+								: [...filter.optionsIds, optionId]
+						}
+					: filter
+			)
+		} else {
+			return [
+				...filters,
+				{ id: itemId, type: FilterType.OPTION, optionsIds: [optionId] }
+			]
+		}
+	}
+
+	const handleFilterChange = (itemId: string, optionId: string) => {
+		setTempFilters(prev => updateFilter(prev, itemId, optionId))
+	}
+
+	const handleConfirmFilters = () => {
+		setSelectedFilters(tempFilters)
+		setConfirmOpen(false)
+		toast({
+			title: 'Filters applied',
+			status: 'success',
+			duration: 2000,
+			isClosable: true
+		})
+		onClose()
+	}
 
 	if (isLoading) {
 		return (
@@ -181,6 +240,9 @@ export const App = () => {
 													textStyle={'body-text-6'}
 													size="md"
 													key={option.id}
+													onChange={() =>
+														handleFilterChange(item.id, option.id)
+													}
 												>
 													{option.name}
 												</Checkbox>
@@ -228,7 +290,7 @@ export const App = () => {
 				</Modal>
 
 				<Modal
-					isOpen={false}
+					isOpen={isConfirmOpen}
 					onClose={() => console.log('close')}
 				>
 					<ModalOverlay />
@@ -267,6 +329,7 @@ export const App = () => {
 									bg={'brand.200'}
 									textStyle="button"
 									_hover={{ bg: 'brand.300' }}
+									onClick={handleConfirmFilters}
 								>
 									{t('filter.applyNewFilter')}
 								</Button>
