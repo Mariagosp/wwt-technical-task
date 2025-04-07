@@ -4,11 +4,8 @@ import { useTranslation } from 'react-i18next'
 import {
 	Box,
 	Button,
-	Checkbox,
 	Flex,
 	Grid,
-	List,
-	ListItem,
 	Modal,
 	ModalBody,
 	ModalCloseButton,
@@ -24,14 +21,15 @@ import {
 } from '@chakra-ui/react'
 import { useQuery } from '@tanstack/react-query'
 
-import { FilterChoose, FilterType } from '@api/types/Filter'
+import { FilterChoose } from '@api/types/Filter'
 import { SearchRequestFilter } from '@api/types/SearchRequest/SearchRequestFilter'
 
-import filteredItems from '../../temp/filterData.json'
+import { ConfirmModal } from '@components/ConfirmModal'
+import { FilterItemsList } from '@components/FilterItemsList'
+import { fetchFilteredData } from '@utils/fetchfilteredData'
+import { updateFilter } from '@utils/updateFilter'
 
-const fetchFilteredData = async (): Promise<FilterChoose[]> => {
-	return filteredItems.filterItems as FilterChoose[]
-}
+import { OptionsList } from '../OptionsList'
 
 export const App = () => {
 	const { data: filterData, isLoading } = useQuery<FilterChoose[]>({
@@ -54,32 +52,6 @@ export const App = () => {
 			setTempFilters(selectedFilters)
 		}
 	}, [isOpen, selectedFilters])
-
-	const updateFilter = (
-		filters: SearchRequestFilter,
-		itemId: string,
-		optionId: string
-	): SearchRequestFilter => {
-		const existing = filters.find(filter => filter.id === itemId)
-		if (existing) {
-			const alreadySelected = existing.optionsIds.includes(optionId)
-			return filters.map(filter =>
-				filter.id === itemId
-					? {
-							...filter,
-							optionsIds: alreadySelected
-								? filter.optionsIds.filter(id => id !== optionId)
-								: [...filter.optionsIds, optionId]
-						}
-					: filter
-			)
-		} else {
-			return [
-				...filters,
-				{ id: itemId, type: FilterType.OPTION, optionsIds: [optionId] }
-			]
-		}
-	}
 
 	const handleFilterChange = (itemId: string, optionId: string) => {
 		setTempFilters(prev => updateFilter(prev, itemId, optionId))
@@ -146,29 +118,10 @@ export const App = () => {
 						borderRadius="md"
 					>
 						{selectedFilters.length > 0 ? (
-							<List
-								spacing={2}
-								mt={2}
-							>
-								{selectedFilters.map(filter => (
-									<ListItem key={filter.id}>
-										<Text textStyle="body-text-2">
-											{filterData?.find(fil => fil.id === filter.id)?.name}:
-										</Text>
-										<Text>
-											{filter.optionsIds
-												.map(
-													optionId =>
-														filterData
-															?.find(fil => fil.id === filter.id)
-															?.options.find(option => option.id === optionId)
-															?.name
-												)
-												.join(', ')}
-										</Text>
-									</ListItem>
-								))}
-							</List>
+							<FilterItemsList
+								selectedFilters={selectedFilters}
+								filterData={filterData}
+							/>
 						) : (
 							<Text
 								color="gray.500"
@@ -244,21 +197,11 @@ export const App = () => {
 											rowGap="24px"
 											w="100%"
 										>
-											{item.options.map(option => (
-												<Checkbox
-													textStyle={'body-text-6'}
-													size="md"
-													key={option.id}
-													isChecked={tempFilters
-														.find(filter => filter.id === item.id)
-														?.optionsIds.includes(option.id)}
-													onChange={() =>
-														handleFilterChange(item.id, option.id)
-													}
-												>
-													{option.name}
-												</Checkbox>
-											))}
+											<OptionsList
+												item={item}
+												tempFilters={tempFilters}
+												handleFilterChange={handleFilterChange}
+											/>
 										</Grid>
 									</Box>
 								))}
@@ -302,58 +245,12 @@ export const App = () => {
 					</ModalContent>
 				</Modal>
 
-				<Modal
-					isOpen={isConfirmOpen}
-					onClose={() => setConfirmOpen(false)}
-				>
-					<ModalOverlay />
-					<ModalContent
-						maxW="1280px"
-						py="32px"
-					>
-						<ModalHeader
-							textStyle={'headline-2'}
-							pb={'120px'}
-							border={'0px'}
-						>
-							{t('filter.wantApplyNewFilter')}
-						</ModalHeader>
-						<ModalCloseButton />
-						<ModalFooter>
-							<Flex
-								justify="center"
-								align="center"
-								width="100%"
-							>
-								<Button
-									w="280px"
-									h="64px"
-									bg="white"
-									border="2px solid gray.200"
-									colorScheme="gray"
-									mr={3}
-									onClick={() => {
-										setConfirmOpen(false)
-										onClose()
-									}}
-								>
-									{t('filter.useOldFilter')}
-								</Button>
-								<Button
-									w="280px"
-									h="64px"
-									color="white"
-									bg={'brand.200'}
-									textStyle="button"
-									_hover={{ bg: 'brand.300' }}
-									onClick={handleConfirmFilters}
-								>
-									{t('filter.applyNewFilter')}
-								</Button>
-							</Flex>
-						</ModalFooter>
-					</ModalContent>
-				</Modal>
+				<ConfirmModal
+					isConfirmOpen={isConfirmOpen}
+					setConfirmOpen={setConfirmOpen}
+					onClose={onClose}
+					handleConfirmFilters={handleConfirmFilters}
+				/>
 			</Box>
 		</>
 	)
