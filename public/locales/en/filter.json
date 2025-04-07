@@ -1,1 +1,13 @@
-{}
+{
+  "mainPage": "Main page",
+  "yourFilters": "Your Filters",
+  "options": "options",
+  "noFiltersSelected": "No filters selected",
+  "openFilterModal": "Open Filter Modal",
+  "filter": "Filter",
+  "apply": "Apply",
+  "clearAllParameters": "Clear all parameters",
+  "wantApplyNewFilter": "Do you want to apply new filter",
+  "applyNewFilter": "Apply new filter",
+  "useOldFilter": "Use old filter"
+}
