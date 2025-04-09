@@ -6,9 +6,9 @@ export const updateFilter = (
 	itemId: string,
 	optionId: string
 ): SearchRequestFilter => {
-	const existing = filters.find(filter => filter.id === itemId)
-	if (existing) {
-		const alreadySelected = existing.optionsIds.includes(optionId)
+	const existedFilter = filters.find(filter => filter.id === itemId)
+	if (existedFilter) {
+		const alreadySelected = existedFilter.optionsIds.includes(optionId)
 		return filters.map(filter =>
 			filter.id === itemId
 				? {

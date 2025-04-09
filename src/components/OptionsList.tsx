@@ -11,21 +11,24 @@ type Props = {
 
 export const OptionsList: React.FC<Props> = props => {
 	const { item, tempFilters, handleFilterChange } = props
+
 	return (
 		<>
-			{item.options.map(option => (
-				<Checkbox
-					textStyle={'body-text-6'}
-					size="md"
-					key={option.id}
-					isChecked={tempFilters
-						.find(filter => filter.id === item.id)
-						?.optionsIds.includes(option.id)}
-					onChange={() => handleFilterChange(item.id, option.id)}
-				>
-					{option.name}
-				</Checkbox>
-			))}
+			{item.options.map(option => {
+				const filter = tempFilters.find(filter => filter.id === item.id)
+				const isChecked = filter?.optionsIds.includes(option.id)
+				return (
+					<Checkbox
+						textStyle={'body-text-6'}
+						size="md"
+						key={option.id}
+						isChecked={isChecked}
+						onChange={() => handleFilterChange(item.id, option.id)}
+					>
+						{option.name}
+					</Checkbox>
+				)
+			})}
 		</>
 	)
 }
